@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>防災管理備品アプリ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fafafa; --card: #ffffff; --text: #1a1a1a; --text2: #666666; --text3: #999999;
+      --border: #eeeeee; --accent: #1a1a1a; --accent-light: #f5f5f5;
+      --red: #e05050; --red-bg: #fdf0f0; --yellow: #d49a00; --yellow-bg: #fef9ec;
+      --green: #2d9d6f; --green-bg: #edf8f3; --orange: #d47020; --orange-bg: #fef4ec;
+      --purple: #7c5cbf; --purple-bg: #f4f0fa;
+      --shadow: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .dark {
+      --bg: #111111; --card: #1a1a1a; --text: #f0f0f0; --text2: #999999; --text3: #666666;
+      --border: #2a2a2a; --accent: #ffffff; --accent-light: #222222;
+      --red-bg: #2a1515; --yellow-bg: #2a2210; --green-bg: #152a1f; --orange-bg: #2a1f15; --purple-bg: #1f1a2a;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2); --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans JP', -apple-system, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; letter-spacing: 0.02em; line-height: 1.7; }
+    .card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); }
+    button { cursor: pointer; font-family: inherit; letter-spacing: 0.02em; }
+    .btn { border: 1px solid var(--border); border-radius: 6px; padding: 8px 20px; font-size: 13px; font-weight: 500; background: var(--card); color: var(--text); transition: all 0.2s; }
+    .btn:hover { border-color: var(--accent); }
+    .btn-dark { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .btn-dark:hover { opacity: 0.85; }
+    .btn-qty { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--border); background: transparent; color: var(--text); font-size: 16px; font-weight: 400; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .btn-qty:hover { border-color: var(--accent); background: var(--accent); color: var(--bg); }
+    .btn-icon { background: none; border: none; font-size: 15px; padding: 6px 8px; border-radius: 6px; color: var(--text3); transition: all 0.15s; }
+    .btn-icon:hover { color: var(--text); background: var(--accent-light); }
+    .badge { padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+    .input-field { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; font-size: 14px; width: 100%; outline: none; background: var(--card); color: var(--text); font-family: inherit; letter-spacing: 0.02em; transition: border-color 0.2s; }
+    .input-field:focus { border-color: var(--accent); }
+    .input-field::placeholder { color: var(--text3); font-weight: 300; }
+    select.input-field { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23999' d='M5 7L1 3h8z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    textarea.input-field { resize: vertical; min-height: 80px; line-height: 1.7; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 24px; border-radius: 6px; font-size: 13px; font-weight: 500; z-index: 9999; color: #fff; background: var(--accent); }
+    .spinner { border: 2px solid var(--border); border-top: 2px solid var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .item-row { padding: 16px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; animation: fadeUp 0.3s ease; }
+    .item-row:last-child { border-bottom: none; }
+    .item-row:hover { background: var(--accent-light); }
+    .progress-bar { height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+    .section-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
+    .advice-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-radius: 8px; background: var(--accent-light); margin-bottom: 8px; }
+    .nav-pill { flex: 1; padding: 10px 0; border: none; font-size: 13px; font-weight: 500; background: transparent; color: var(--text3); border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .nav-pill.active { color: var(--text); border-bottom-color: var(--accent); }
+    .photo-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; cursor: pointer; transition: opacity 0.15s; }
+    .photo-thumb:hover { opacity: 0.8; }
+    .photo-upload-area { border: 1.5px dashed var(--border); border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .photo-upload-area:hover { border-color: var(--accent); background: var(--accent-light); }
+    .photo-preview { width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; }
+    .photo-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; cursor: pointer; }
+    .photo-lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+    @media (max-width: 640px) {
+      body { font-size: 15px; }
+      .item-row { padding: 14px 16px; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+const API_URL = 'https://script.google.com/macros/s/AKfycbx9pUUAtVauH9L-zHj0ivMlsdPKWrUxsahF0pGec8JoQBrZXnK_Zcrxfe7plGDfF3Eo/exec';
+
+function apiGet(action) {
+  return fetch(API_URL + '?action=' + action)
+    .then(function(r) { return r.json(); });
+}
+
+function apiPost(action, data) {
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ action: action }, data))
+  }).then(function(r) { return r.json(); });
+}
+
+const CATS = [
+  { id: 'food', label: '食品', tag: 'FOOD' },
+  { id: 'medical', label: '医療品', tag: 'MEDICAL' },
+  { id: 'living', label: '生活用品', tag: 'LIVING' },
+  { id: 'evacuation', label: '避難用具', tag: 'EVACUATION' },
+  { id: 'other', label: 'その他', tag: 'OTHER' },
+];
+const getCat = id => CATS.find(c => c.id === id) || CATS[4];
+
+function expiryInfo(d) {
+  if (!d) return null;
+  const t = new Date(); t.setHours(0,0,0,0);
+  const diff = Math.ceil((new Date(d) - t) / 86400000);
+  if (diff < 0) return { key: 'expired', label: '期限切れ', color: 'var(--red)', bg: 'var(--red-bg)' };
+  if (diff <= 30) return { key: 'soon30', label: diff + '日', color: 'var(--yellow)', bg: 'var(--yellow-bg)' };
+  if (diff <= 90) return { key: 'soon90', label: Math.ceil(diff/30) + 'ヶ月', color: 'var(--orange)', bg: 'var(--orange-bg)' };
+  return { key: 'ok', label: 'OK', color: 'var(--green)', bg: 'var(--green-bg)' };
+}
+
+function getAdvice(items) {
+  const tips = [];
+  const month = new Date().getMonth() + 1;
+  const has = n => items.some(i => i.name.includes(n));
+  const catQty = c => items.filter(i => i.category === c).reduce((s, i) => s + i.quantity, 0);
+  const short = items.filter(i => i.targetQuantity > 0 && i.quantity < i.targetQuantity);
+  const expd = items.filter(i => { const e = expiryInfo(i.expiryDate); return e && e.key === 'expired'; });
+  if (expd.length > 0) tips.push({ text: '期限切れが' + expd.length + '件。入れ替えを。' });
+  if (short.length > 0) short.forEach(i => tips.push({ text: '「' + i.name + '」が' + (i.targetQuantity - i.quantity) + '個不足' }));
+  if (catQty('food') === 0) tips.push({ text: '食品が未登録。3日分の備蓄を。' });
+  if (catQty('medical') === 0) tips.push({ text: '医療品が未登録。救急セットを。' });
+  if (!has('水') && !has('飲料')) tips.push({ text: '飲料水を。1人1日3Lが目安。' });
+  if ((month >= 11 || month <= 2) && !has('カイロ') && !has('毛布')) tips.push({ text: '冬季。防寒用品の備蓄を。' });
+  if (month >= 6 && month <= 9 && !has('扇') && !has('冷却')) tips.push({ text: '夏季。冷却グッズの備蓄を。' });
+  return tips;
+}
+
+function Toast({ msg, type }) {
+  if (!msg) return null;
+  const bg = type === 'error' ? 'var(--red)' : type === 'warn' ? 'var(--yellow)' : 'var(--accent)';
+  return <div className="toast" style={{ background: bg }}>{msg}</div>;
+}
+
+function App() {
+  const [dark, setDark] = useState(false);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState({ name: '', category: 'food', quantity: 1, targetQuantity: 0, expiryDate: '', memo: '', photoUrl: '' });
+  const [view, setView] = useState('list');
+  const [manual, setManual] = useState([]);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [editManualIdx, setEditManualIdx] = useState(-1);
+  const [manualForm, setManualForm] = useState({ title: '', content: '' });
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [lightbox, setLightbox] = useState('');
+  const fileInputRef = useRef(null);
+
+  const show = (msg, type='success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 2500); };
+  useEffect(() => { document.body.className = dark ? 'dark' : ''; }, [dark]);
+  useEffect(() => { loadData(); }, []);
+
+  function loadData() {
+    setLoading(true);
+    apiGet('getItems')
+      .then(function(r) {
+        setLoading(false);
+        if (r.status === 'success') { setItems(r.data || []); setManual(r.manual || []); }
+        else show('読み込みエラー', 'error');
+      })
+      .catch(function() { setLoading(false); show('接続エラー', 'error'); });
+  }
+
+  function save(ni) {
+    setSaving(true);
+    apiPost('saveItems', { items: ni })
+      .then(function(r) { setSaving(false); show('保存しました'); })
+      .catch(function() { setSaving(false); show('保存エラー', 'error'); });
+  }
+
+  function saveManualAPI(entries) {
+    apiPost('saveManual', { entries: entries })
+      .then(function(r) { show('マニュアル保存'); })
+      .catch(function() {});
+  }
+
+  function updateQty(id, delta) { const ni = items.map(i => i.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i); setItems(ni); save(ni); }
+
+  function openAdd() {
+    setEditItem(null);
+    setForm({ name: '', category: 'food', quantity: 1, targetQuantity: 0, expiryDate: '', memo: '', photoUrl: '' });
+    setPhotoPreview('');
+    setShowForm(true);
+  }
+  function openEdit(item) {
+    setEditItem(item);
+    setForm({ name: item.name, category: item.category, quantity: item.quantity, targetQuantity: item.targetQuantity || 0, expiryDate: item.expiryDate || '', memo: item.memo || '', photoUrl: item.photoUrl || '' });
+    setPhotoPreview(item.photoUrl || '');
+    setShowForm(true);
+  }
+
+  function handlePhotoSelect(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { show('5MB以下の画像を選択してください', 'warn'); return; }
+    if (!file.type.startsWith('image/')) { show('画像ファイルを選択してください', 'warn'); return; }
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var dataUrl = ev.target.result;
+      setPhotoPreview(dataUrl);
+      var base64 = dataUrl.split(',')[1];
+      setPhotoUploading(true);
+      show('写真をアップロード中...', 'warn');
+      apiPost('uploadPhoto', { base64: base64, fileName: file.name, mimeType: file.type })
+        .then(function(r) {
+          setPhotoUploading(false);
+          if (r.status === 'success') {
+            setForm(function(prev) { return { ...prev, photoUrl: r.url }; });
+            setPhotoPreview(r.url);
+            show('写真をアップロードしました');
+          } else {
+            show('アップロードエラー: ' + r.message, 'error');
+            setPhotoPreview('');
+          }
+        })
+        .catch(function() {
+          setPhotoUploading(false);
+          show('アップロードエラー', 'error');
+          setPhotoPreview('');
+        });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removePhoto() {
+    if (form.photoUrl) {
+      apiPost('deletePhoto', { fileUrl: form.photoUrl }).catch(function() {});
+    }
+    setForm({ ...form, photoUrl: '' });
+    setPhotoPreview('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.name.trim()) { show('品名を入力', 'warn'); return; }
+    let ni;
+    if (editItem) ni = items.map(i => i.id === editItem.id ? { ...i, ...form, quantity: Number(form.quantity), targetQuantity: Number(form.targetQuantity) } : i);
+    else ni = [...items, { id: Date.now(), ...form, quantity: Number(form.quantity), targetQuantity: Number(form.targetQuantity) }];
+    setItems(ni); setShowForm(false); save(ni);
+  }
+
+  function handleDelete(id) {
+    if (!confirm('削除しますか？')) return;
+    var item = items.find(function(i) { return i.id === id; });
+    if (item && item.photoUrl) {
+      apiPost('deletePhoto', { fileUrl: item.photoUrl }).catch(function() {});
+    }
+    const ni = items.filter(i => i.id !== id);
+    setItems(ni); save(ni);
+  }
+
+  function openManualAdd() { setEditManualIdx(-1); setManualForm({ title: '', content: '' }); setShowManualForm(true); }
+  function openManualEdit(idx) { setEditManualIdx(idx); setManualForm({ ...manual[idx] }); setShowManualForm(true); }
+  function handleManualSubmit(e) {
+    e.preventDefault();
+    if (!manualForm.title.trim()) return;
+    let nm;
+    if (editManualIdx >= 0) nm = manual.map((m, i) => i === editManualIdx ? { ...manualForm } : m);
+    else nm = [...manual, { ...manualForm }];
+    setManual(nm); setShowManualForm(false); saveManualAPI(nm);
+  }
+  function deleteManual(idx) { if (!confirm('削除？')) return; const nm = manual.filter((_, i) => i !== idx); setManual(nm); saveManualAPI(nm); }
+
+  const filtered = useMemo(() => items.filter(i => {
+    if (filter !== 'all' && i.category !== filter) return false;
+    if (search && !i.name.toLowerCase().includes(search.toLowerCase()) && !(i.memo||'').toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  }), [items, filter, search]);
+
+  const stats = useMemo(() => ({
+    exp: items.filter(i => { const e = expiryInfo(i.expiryDate); return e && e.key === 'expired'; }).length,
+    soon: items.filter(i => { const e = expiryInfo(i.expiryDate); return e && (e.key === 'soon30' || e.key === 'soon90'); }).length,
+    short: items.filter(i => i.targetQuantity > 0 && i.quantity < i.targetQuantity).length,
+  }), [items]);
+
+  const advice = useMemo(() => getAdvice(items), [items]);
+
+  function downloadCSV() {
+    const h = ['品名','ジャンル','現在数','目標数','期限','メモ','画像URL'];
+    const rows = items.map(i => [i.name, getCat(i.category).label, i.quantity, i.targetQuantity||'', i.expiryDate||'', i.memo||'', i.photoUrl||'']);
+    const csv = [h,...rows].map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'})); a.download = '防災備品リスト.csv'; a.click();
+  }
+
+  function downloadPDF() {
+    show('PDF生成中...', 'warn');
+    apiGet('generatePDF')
+      .then(function(r) {
+        if (r.status === 'success') { window.open(r.url, '_blank'); show('PDF完了'); }
+        else show('PDFエラー', 'error');
+      })
+      .catch(function() { show('PDFエラー', 'error'); });
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', paddingBottom: 60 }}>
+      {toast && <Toast msg={toast.msg} type={toast.type} />}
+      {lightbox && <div className="photo-lightbox" onClick={() => setLightbox('')}><img src={lightbox} alt="" /></div>}
+
+      <header style={{ borderBottom: '1px solid var(--border)', background: 'var(--card)' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>🛡</span>
+            <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '0.08em' }}>防災備品</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button className="btn-icon" onClick={() => setDark(!dark)} style={{ fontSize: 14 }}>{dark ? '☀' : '●'}</button>
+            <button className="btn-icon" onClick={loadData} style={{ fontSize: 14 }}>↻</button>
+            <button className="btn btn-dark" onClick={openAdd} style={{ padding: '6px 16px', fontSize: 12 }}>＋ 追加</button>
+          </div>
+        </div>
+      </header>
+
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 20px' }}>
+        <div style={{ display: 'flex', gap: 1, margin: '24px 0 20px', background: 'var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ flex: 1, background: 'var(--card)', padding: '14px 0', textAlign: 'center' }}>
+            <div style={{ fontSize: 24, fontWeight: 300, color: 'var(--text)' }}>{items.length}</div>
+            <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.08em', fontWeight: 500 }}>TOTAL</div>
+          </div>
+          {stats.exp > 0 && <div style={{ flex: 1, background: 'var(--card)', padding: '14px 0', textAlign: 'center' }}>
+            <div style={{ fontSize: 24, fontWeight: 300, color: 'var(--red)' }}>{stats.exp}</div>
+            <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.08em', fontWeight: 500 }}>EXPIRED</div>
+          </div>}
+          {stats.soon > 0 && <div style={{ flex: 1, background: 'var(--card)', padding: '14px 0', textAlign: 'center' }}>
+            <div style={{ fontSize: 24, fontWeight: 300, color: 'var(--yellow)' }}>{stats.soon}</div>
+            <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.08em', fontWeight: 500 }}>CAUTION</div>
+          </div>}
+          {stats.short > 0 && <div style={{ flex: 1, background: 'var(--card)', padding: '14px 0', textAlign: 'center' }}>
+            <div style={{ fontSize: 24, fontWeight: 300, color: 'var(--purple)' }}>{stats.short}</div>
+            <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.08em', fontWeight: 500 }}>SHORTAGE</div>
+          </div>}
+        </div>
+
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
+          <button className={'nav-pill' + (view === 'list' ? ' active' : '')} onClick={() => setView('list')}>備品リスト</button>
+          <button className={'nav-pill' + (view === 'manual' ? ' active' : '')} onClick={() => setView('manual')}>マニュアル</button>
+        </div>
+
+        {view === 'list' && <>
+          {advice.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <div className="section-label">Advice</div>
+              {advice.map((a, i) => (
+                <div key={i} className="advice-row">
+                  <span style={{ color: 'var(--text3)', fontSize: 13, flexShrink: 0 }}>→</span>
+                  <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 400 }}>{a.text}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ marginBottom: 16 }}>
+            <input className="input-field" placeholder="検索" value={search} onChange={e => setSearch(e.target.value)} style={{ fontSize: 13, fontWeight: 300 }} />
+          </div>
+
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+            <button onClick={() => setFilter('all')} style={{ padding: '5px 14px', borderRadius: 4, border: '1px solid', borderColor: filter === 'all' ? 'var(--accent)' : 'var(--border)', fontSize: 11, fontWeight: 500, background: filter === 'all' ? 'var(--accent)' : 'var(--card)', color: filter === 'all' ? 'var(--bg)' : 'var(--text2)', cursor: 'pointer', letterSpacing: '0.04em' }}>All {items.length}</button>
+            {CATS.map(c => {
+              const n = items.filter(i => i.category === c.id).length;
+              return <button key={c.id} onClick={() => setFilter(c.id)} style={{ padding: '5px 14px', borderRadius: 4, border: '1px solid', borderColor: filter === c.id ? 'var(--accent)' : 'var(--border)', fontSize: 11, fontWeight: 500, background: filter === c.id ? 'var(--accent)' : 'var(--card)', color: filter === c.id ? 'var(--bg)' : 'var(--text2)', cursor: 'pointer', letterSpacing: '0.04em' }}>{c.label} {n}</button>;
+            })}
+          </div>
+
+          <div className="card" style={{ overflow: 'hidden', marginBottom: 24 }}>
+            {loading ? (
+              <div style={{ padding: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                <div className="spinner"></div>
+                <p style={{ color: 'var(--text3)', fontSize: 12, fontWeight: 300 }}>読み込み中</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div style={{ padding: 60, textAlign: 'center' }}>
+                <p style={{ color: 'var(--text3)', fontSize: 13, fontWeight: 300 }}>{items.length === 0 ? '備品を追加してください' : '該当する備品がありません'}</p>
+              </div>
+            ) : filtered.map(item => {
+              const cat = getCat(item.category);
+              const ei = expiryInfo(item.expiryDate);
+              const pct = item.targetQuantity > 0 ? Math.min(100, Math.round(item.quantity / item.targetQuantity * 100)) : -1;
+              return (
+                <div key={item.id} className="item-row">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                    {item.photoUrl && <img src={item.photoUrl} className="photo-thumb" alt="" onClick={() => setLightbox(item.photoUrl)} onError={function(e) { e.target.style.display = 'none'; }} />}
+                    <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{item.name}</span>
+                    <span className="badge" style={{ background: 'var(--accent-light)', color: 'var(--text2)', fontSize: 9 }}>{cat.tag}</span>
+                    {ei && <span className="badge" style={{ background: ei.bg, color: ei.color, fontSize: 9 }}>{ei.label}</span>}
+                  </div>
+                  {(item.memo || item.expiryDate) && (
+                    <div style={{ marginBottom: 8, paddingLeft: item.photoUrl ? 54 : 0 }}>
+                      {item.memo && <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 300 }}>{item.memo}</span>}
+                      {item.memo && item.expiryDate && <span style={{ color: 'var(--text3)', margin: '0 6px', fontSize: 11 }}>·</span>}
+                      {item.expiryDate && <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 300 }}>{item.expiryDate}</span>}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingLeft: item.photoUrl ? 54 : 0 }}>
+                    <button className="btn-qty" onClick={() => updateQty(item.id, -1)}>−</button>
+                    <span style={{ fontSize: 20, fontWeight: 300, minWidth: 28, textAlign: 'center', fontFeatureSettings: '"tnum"' }}>{item.quantity}</span>
+                    <button className="btn-qty" onClick={() => updateQty(item.id, 1)}>＋</button>
+                    {pct >= 0 && (
+                      <div style={{ flex: 1, maxWidth: 100, marginLeft: 4 }}>
+                        <div style={{ fontSize: 9, color: 'var(--text3)', textAlign: 'right', marginBottom: 3, fontWeight: 500, letterSpacing: '0.04em' }}>{item.quantity} / {item.targetQuantity}</div>
+                        <div className="progress-bar"><div className="progress-fill" style={{ width: pct + '%', background: pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--red)' }}></div></div>
+                      </div>
+                    )}
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: 2 }}>
+                      <button className="btn-icon" onClick={() => openEdit(item)}>✎</button>
+                      <button className="btn-icon" onClick={() => handleDelete(item.id)} style={{ color: 'var(--red)' }}>×</button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button className="btn" onClick={downloadCSV} disabled={items.length===0} style={{ fontSize: 12 }}>CSV</button>
+            <button className="btn" onClick={downloadPDF} disabled={items.length===0} style={{ fontSize: 12 }}>PDF</button>
+            <button className="btn btn-dark" onClick={() => save(items)} disabled={saving||items.length===0} style={{ fontSize: 12 }}>{saving ? '...' : '保存'}</button>
+          </div>
+        </>}
+
+        {view === 'manual' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div className="section-label" style={{ marginBottom: 0 }}>Manual</div>
+              <button className="btn btn-dark" onClick={openManualAdd} style={{ padding: '5px 14px', fontSize: 11 }}>＋ 追加</button>
+            </div>
+            {manual.length === 0 ? (
+              <div className="card" style={{ padding: 60, textAlign: 'center' }}>
+                <p style={{ color: 'var(--text3)', fontSize: 13, fontWeight: 300 }}>避難場所、緊急連絡先などを登録</p>
+              </div>
+            ) : manual.map((m, i) => (
+              <div key={i} className="card" style={{ padding: '16px 20px', marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{m.title}</h3>
+                    <p style={{ fontSize: 13, color: 'var(--text2)', whiteSpace: 'pre-wrap', fontWeight: 300, lineHeight: 1.8 }}>{m.content}</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                    <button className="btn-icon" onClick={() => openManualEdit(i)}>✎</button>
+                    <button className="btn-icon" onClick={() => deleteManual(i)} style={{ color: 'var(--red)' }}>×</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showForm && (
+        <div className="overlay" onClick={e => { if (e.target === e.currentTarget) setShowForm(false); }}>
+          <div className="card" style={{ width: '100%', maxWidth: 400, padding: '28px 24px', maxHeight: '90vh', overflowY: 'auto', animation: 'fadeUp 0.2s ease' }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, letterSpacing: '0.04em' }}>{editItem ? 'Edit' : 'Add Item'}</h2>
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>写真</label>
+                {photoPreview ? (
+                  <div>
+                    <img src={photoPreview} className="photo-preview" alt="" />
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <button type="button" className="btn" onClick={() => fileInputRef.current && fileInputRef.current.click()} style={{ fontSize: 11, padding: '5px 12px', flex: 1 }} disabled={photoUploading}>{photoUploading ? 'アップロード中...' : '変更'}</button>
+                      <button type="button" className="btn" onClick={removePhoto} style={{ fontSize: 11, padding: '5px 12px', color: 'var(--red)' }} disabled={photoUploading}>削除</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="photo-upload-area" onClick={() => !photoUploading && fileInputRef.current && fileInputRef.current.click()}>
+                    {photoUploading ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                        <div className="spinner"></div>
+                        <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 300 }}>アップロード中...</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: 28, marginBottom: 4, color: 'var(--text3)' }}>📷</div>
+                        <div style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 300 }}>タップして写真を選択</div>
+                        <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 300, marginTop: 2 }}>5MB以下 · JPG, PNG</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoSelect} />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>品名</label>
+                <input className="input-field" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="飲料水 2L" required />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>ジャンル</label>
+                <select className="input-field" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+                  {CATS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>現在数</label>
+                  <input className="input-field" type="number" min="0" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>目標数</label>
+                  <input className="input-field" type="number" min="0" value={form.targetQuantity} onChange={e => setForm({...form, targetQuantity: e.target.value})} placeholder="0" />
+                </div>
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>消費期限</label>
+                <input className="input-field" type="date" value={form.expiryDate} onChange={e => setForm({...form, expiryDate: e.target.value})} />
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>メモ</label>
+                <input className="input-field" value={form.memo} onChange={e => setForm({...form, memo: e.target.value})} placeholder="保管場所など" />
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" className="btn" onClick={() => setShowForm(false)}>キャンセル</button>
+                <button type="submit" className="btn btn-dark" disabled={photoUploading}>{editItem ? '更新' : '追加'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showManualForm && (
+        <div className="overlay" onClick={e => { if (e.target === e.currentTarget) setShowManualForm(false); }}>
+          <div className="card" style={{ width: '100%', maxWidth: 400, padding: '28px 24px', animation: 'fadeUp 0.2s ease' }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, letterSpacing: '0.04em' }}>{editManualIdx >= 0 ? 'Edit' : 'Add Manual'}</h2>
+            <form onSubmit={handleManualSubmit}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>タイトル</label>
+                <input className="input-field" value={manualForm.title} onChange={e => setManualForm({...manualForm, title: e.target.value})} placeholder="避難場所" required />
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase' }}>内容</label>
+                <textarea className="input-field" value={manualForm.content} onChange={e => setManualForm({...manualForm, content: e.target.value})} placeholder="◯◯小学校（徒歩5分）" rows={4} />
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" className="btn" onClick={() => setShowManualForm(false)}>キャンセル</button>
+                <button type="submit" className="btn btn-dark">{editManualIdx >= 0 ? '更新' : '追加'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
